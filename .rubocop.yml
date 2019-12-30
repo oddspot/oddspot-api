@@ -1,0 +1,9 @@
+AllCops:
+  TargetRubyVersion: 2.5
+
+Style/Documentation:
+  Enabled: false
+
+Layout:
+  Metrics/LineLength:
+    Max: 100
