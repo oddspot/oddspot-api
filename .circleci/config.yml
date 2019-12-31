@@ -1,0 +1,70 @@
+version: 2
+
+defaults: &defaults
+  working_directory: ~/oddspot-api
+  docker:
+    - image: circleci/ruby:2.6.1
+      environment:
+        BUNDLER_VERSION: 2.0.1
+        BUNDLE_JOBS: 4
+        BUNDLE_RETRY: 3
+        BUNDLE_PATH: vendor/bundle
+
+jobs:
+  build:
+    <<: *defaults
+    steps:
+      - checkout
+      - attach_workspace:
+          at: ~/oddspot-api
+      - restore_cache:
+          keys:
+          - bundle-{{ checksum "Gemfile.lock" }}
+      - run:
+          name: Configure Bundler
+          command: |
+            sudo gem update --system
+            sudo gem uninstall bundler
+            sudo rm /usr/local/bin/bundle
+            sudo rm /usr/local/bin/bundler
+            sudo gem install bundler
+      - run: bundle install
+      - save_cache:
+          paths:
+            - ./vendor/bundle
+          key: bundle-{{ checksum "Gemfile.lock" }}
+      - persist_to_workspace:
+          root: .
+          paths:
+            - vendor/bundle
+
+  lint:
+    <<: *defaults
+    steps:
+      - checkout
+      - attach_workspace:
+          at: ~/oddspot-api
+      - restore_cache:
+          keys:
+          - bundle-{{ checksum "Gemfile.lock" }}
+      - run:
+          name: Configure Bundler
+          command: |
+            sudo gem update --system
+            sudo gem uninstall bundler
+            sudo rm /usr/local/bin/bundle
+            sudo rm /usr/local/bin/bundler
+            sudo gem install bundler
+      - run: bundle install
+      - run:
+          name: Run Rubocop
+          command: sh scripts/rubocop.sh
+
+workflows:
+  version: 2
+  build-lint:
+    jobs:
+      - build
+      - lint:
+          requires:
+            - build
